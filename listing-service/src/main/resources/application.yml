@@ -1,0 +1,76 @@
+spring:
+  application:
+    name: listing-service
+
+  data:
+    mongodb:
+      uri: mongodb://${MONGO_HOST:localhost}:${MONGO_PORT:27017}/${MONGO_DB:foodbridge_listings}
+      auto-index-creation: true   # ensures the 2dsphere geo index is created on startup
+
+  # Quartz's JDBC JobStore uses its own dedicated MySQL schema, separate from
+  # this service's MongoDB business data — see quartz/QuartzDataSourceConfig.
+  quartz-datasource:
+    url: jdbc:mysql://${QUARTZ_DB_HOST:localhost}:${QUARTZ_DB_PORT:3306}/${QUARTZ_DB_NAME:foodbridge_listing_quartz}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${QUARTZ_DB_USERNAME:foodbridge}
+    password: ${QUARTZ_DB_PASSWORD:foodbridge}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: always
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: ListingServiceScheduler
+            instanceId: AUTO
+          jobStore:
+            isClustered: true
+            clusterCheckinInterval: 10000
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+            useProperties: false
+          threadPool:
+            threadCount: 5
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+server:
+  port: ${SERVER_PORT:8082}
+  shutdown: graceful
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:REPLACE_ME_WITH_A_256_BIT_BASE64_SECRET_IN_EVERY_ENVIRONMENT}
+
+aws:
+  region: ${AWS_REGION:us-east-1}
+  s3:
+    listing-images-bucket: ${LISTING_IMAGES_BUCKET:foodbridge-listing-images}
+    endpoint-override: ${S3_ENDPOINT_OVERRIDE:http://localhost:4566}
+    public-base-url: ${S3_PUBLIC_BASE_URL:http://localhost:4566}
+
+listing:
+  expiry-scheduler:
+    fixed-delay-ms: ${EXPIRY_SCHEDULER_DELAY_MS:60000}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+      probes:
+        enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    root: INFO
+    com.foodbridge: DEBUG

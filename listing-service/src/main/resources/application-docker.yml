@@ -1,0 +1,13 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://mongo:27017/foodbridge_listings
+  quartz-datasource:
+    url: jdbc:mysql://mysql:3306/foodbridge_listing_quartz?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+  kafka:
+    bootstrap-servers: kafka:9092
+
+aws:
+  s3:
+    endpoint-override: http://localstack:4566
+    public-base-url: http://localhost:4566
