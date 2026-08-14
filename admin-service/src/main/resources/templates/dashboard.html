@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>FoodBridge Admin — Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+</head>
+<body>
+<header class="topbar">
+    <h1>FoodBridge Admin</h1>
+    <form method="post" th:action="@{/logout}">
+        <button type="submit" class="link-button">Sign out</button>
+    </form>
+</header>
+
+<main class="container">
+
+    <section class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-value" th:text="${stats.totalListingsCreated()}">0</span>
+            <span class="stat-label">Listings created</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value" th:text="${stats.totalDonationsClaimed()}">0</span>
+            <span class="stat-label">Donations claimed</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value" th:text="${stats.totalDeliveriesCompleted()}">0</span>
+            <span class="stat-label">Deliveries completed</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value" th:text="${stats.totalUsersRegistered()}">0</span>
+            <span class="stat-label">Users registered</span>
+        </div>
+        <div class="stat-card highlight">
+            <span class="stat-value" th:text="${stats.pendingNgoVerifications()}">0</span>
+            <span class="stat-label">Pending NGO approvals</span>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Pending NGO verifications</h2>
+        <table class="data-table" th:if="${not #lists.isEmpty(pendingNgos)}">
+            <thead>
+            <tr>
+                <th>Organization</th>
+                <th>Email</th>
+                <th>Registered</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="ngo : ${pendingNgos}">
+                <td th:text="${ngo.displayName()}">Org name</td>
+                <td th:text="${ngo.email()}">email@example.org</td>
+                <td th:text="${ngo.createdAt()}">2026-01-01</td>
+                <td class="actions">
+                    <form method="post" th:action="@{'/ngos/' + ${ngo.id()} + '/approve'}">
+                        <button type="submit" class="btn-approve">Approve</button>
+                    </form>
+                    <form method="post" th:action="@{'/ngos/' + ${ngo.id()} + '/reject'}">
+                        <button type="submit" class="btn-reject">Reject</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <p th:if="${#lists.isEmpty(pendingNgos)}" class="empty-state">No pending NGO verifications.</p>
+    </section>
+
+    <section class="panel">
+        <h2>Recent activity</h2>
+        <ul class="activity-feed" th:if="${not #lists.isEmpty(activity)}">
+            <li th:each="item : ${activity}">
+                <span class="activity-type" th:text="${item.eventType()}">EVENT</span>
+                <span class="activity-summary" th:text="${item.summary()}">Summary</span>
+                <span class="activity-time" th:text="${item.occurredAt()}">time</span>
+            </li>
+        </ul>
+        <p th:if="${#lists.isEmpty(activity)}" class="empty-state">No recent activity yet.</p>
+    </section>
+
+</main>
+</body>
+</html>
