@@ -1,0 +1,32 @@
+spring:
+  data:
+    redis:
+      host: redis
+      port: 6379
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: http://auth-service:8081
+          predicates:
+            - Path=/api/auth/**,/api/users/**,/api/admin/users/**
+        - id: listing-service
+          uri: http://listing-service:8082
+          predicates:
+            - Path=/api/listings/**
+        - id: matching-service
+          uri: http://matching-service:8084
+          predicates:
+            - Path=/api/matching/**
+        - id: claim-service
+          uri: http://claim-service:8083
+          predicates:
+            - Path=/api/claims/**
+        - id: logistics-service
+          uri: http://logistics-service:8085
+          predicates:
+            - Path=/api/logistics/**
+        - id: document-service
+          uri: http://document-service:8087
+          predicates:
+            - Path=/api/documents/**

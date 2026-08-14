@@ -1,0 +1,96 @@
+spring:
+  application:
+    name: api-gateway
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  cloud:
+    gateway:
+      httpclient:
+        connect-timeout: 3000
+        response-timeout: 10s
+      default-filters:
+        - name: Retry
+          args:
+            retries: 2
+            statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE
+            methods: GET
+      routes:
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/auth/**,/api/users/**,/api/admin/users/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@userOrIpKeyResolver}"
+
+        - id: listing-service
+          uri: ${LISTING_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/listings/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 30
+                redis-rate-limiter.burstCapacity: 60
+                key-resolver: "#{@userOrIpKeyResolver}"
+
+        - id: matching-service
+          uri: ${MATCHING_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Path=/api/matching/**
+
+        - id: claim-service
+          uri: ${CLAIM_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/claims/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                # Deliberately tighter than other routes: this is the platform's
+                # concurrency-critical path, and a much lower burst budget here
+                # cheaply discourages naive claim-spam clients before they even
+                # reach claim-service's Redisson lock.
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 15
+                key-resolver: "#{@userOrIpKeyResolver}"
+
+        - id: logistics-service
+          uri: ${LOGISTICS_SERVICE_URL:http://localhost:8085}
+          predicates:
+            - Path=/api/logistics/**
+
+        - id: document-service
+          uri: ${DOCUMENT_SERVICE_URL:http://localhost:8087}
+          predicates:
+            - Path=/api/documents/**
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:REPLACE_ME_WITH_A_256_BIT_BASE64_SECRET_IN_EVERY_ENVIRONMENT}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.foodbridge: DEBUG
+    org.springframework.cloud.gateway: INFO
