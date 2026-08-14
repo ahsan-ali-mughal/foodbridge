@@ -1,0 +1,76 @@
+spring:
+  application:
+    name: document-service
+
+  data:
+    mongodb:
+      uri: mongodb://${MONGO_HOST:localhost}:${MONGO_PORT:27017}/${MONGO_DB:foodbridge_documents}
+
+  quartz-datasource:
+    url: jdbc:mysql://${QUARTZ_DB_HOST:localhost}:${QUARTZ_DB_PORT:3306}/${QUARTZ_DB_NAME:foodbridge_document_quartz}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${QUARTZ_DB_USERNAME:foodbridge}
+    password: ${QUARTZ_DB_PASSWORD:foodbridge}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: always
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: DocumentServiceScheduler
+            instanceId: AUTO
+          jobStore:
+            isClustered: true
+            clusterCheckinInterval: 10000
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+            useProperties: false
+          threadPool:
+            threadCount: 5
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      properties:
+        spring.json.trusted.packages: com.foodbridge.common.event
+
+server:
+  port: ${SERVER_PORT:8087}
+  shutdown: graceful
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:REPLACE_ME_WITH_A_256_BIT_BASE64_SECRET_IN_EVERY_ENVIRONMENT}
+
+aws:
+  region: ${AWS_REGION:us-east-1}
+  endpoint-override: ${AWS_ENDPOINT_OVERRIDE:http://localhost:4566}
+  s3:
+    receipts-bucket: ${RECEIPTS_BUCKET:foodbridge-receipts}
+  sqs:
+    receipt-generation-queue-url: ${RECEIPT_QUEUE_URL:http://localhost:4566/000000000000/receipt-generation-queue}
+
+document:
+  job-poller:
+    fixed-delay-ms: ${JOB_POLLER_DELAY_MS:5000}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    root: INFO
+    com.foodbridge: DEBUG

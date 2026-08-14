@@ -1,0 +1,11 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://mongo:27017/foodbridge_notifications
+  quartz-datasource:
+    url: jdbc:mysql://mysql:3306/foodbridge_notification_quartz?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+  kafka:
+    bootstrap-servers: kafka:9092
+
+aws:
+  endpoint-override: http://localstack:4566
